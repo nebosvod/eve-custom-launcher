@@ -42,18 +42,51 @@ namespace eveCustomLauncher
         {
             try
             {
+                string username = string.Empty;
+                string password = string.Empty;
+                string settingsProfile = string.Empty;
+                bool askUser = true;
+                bool createProfile = false;
                 if (!File.Exists("exefile.exe"))
                     throw new Exception("exefile.exe not found");
 
-                //Ask for user data
-                Console.Write("Enter username: ");
-                string username = Console.ReadLine();
-                Console.Write("Enter password: ");
-                ConsoleColor fore = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.Black;
-                string password = Console.ReadLine();
-                Console.ForegroundColor = fore;
-                string settingsProfile = AskForSettingsProfile();
+                if (args.Length > 0)
+                {
+                    if (args[0].ToLower().Trim().StartsWith("/profile:"))
+                    {
+                        string eclpFileName = args[0].Substring(9);
+                        DPAPI dpapi = new DPAPI(eclpFileName);
+                        username = dpapi.GetUserName();
+                        settingsProfile = dpapi.GetSettingsProfile();
+                        password = dpapi.GetPassword();
+                        askUser = false;
+                        Console.WriteLine("Profile opened");
+                    }
+                    else if (args[0].ToLower().Trim() == "/createprofile")
+                        createProfile = true;
+                }
+
+                if (askUser)
+                {
+                    //Ask for user data
+                    Console.Write("Enter username: ");
+                    username = Console.ReadLine();
+                    Console.Write("Enter password: ");
+                    ConsoleColor fore = Console.ForegroundColor;
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    password = Console.ReadLine();
+                    Console.ForegroundColor = fore;
+                    settingsProfile = AskForSettingsProfile();
+
+                    if (createProfile)
+                    {
+                        string profileName = username + ".eclp";
+                        DPAPI.CreateKeyFile(profileName, username, password, settingsProfile);
+                        Console.WriteLine("Profile {0} created.", profileName);
+                        Console.ReadLine();
+                        return;
+                    }
+                }
 
                 //REQUEST 1
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(urls[0]);
