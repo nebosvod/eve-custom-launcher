@@ -117,7 +117,7 @@ namespace eveCustomLauncher
                 ParseResponse4(response);
                 Console.WriteLine("Request 4\nAccessToken={0}", rq4AccessToken);
 
-                //RESUEST 5
+                //REQUEST 5
                 request = (HttpWebRequest)WebRequest.Create(urls[4] + string.Format(rq5AccessToken, rq4AccessToken));
                 request.ServicePoint.Expect100Continue = false;
                 request.AllowAutoRedirect = false;
