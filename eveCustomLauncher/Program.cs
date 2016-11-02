@@ -38,10 +38,14 @@ namespace eveCustomLauncher
         static string rq4AccessToken = string.Empty;
         static string rq5ssoToken = string.Empty;
 
+        static Log log;
+
         static void Main(string[] args)
         {
             try
             {
+                log = new Log();
+                log.WriteLine("Program startup");
                 string username = string.Empty;
                 string password = string.Empty;
                 string settingsProfile = string.Empty;
@@ -55,10 +59,12 @@ namespace eveCustomLauncher
                     if (args[0].ToLower().Trim().StartsWith("/profile:"))
                     {
                         string eclpFileName = args[0].Substring(9);
+                        log.WriteLine("Using profile {0}", eclpFileName);
                         DPAPI dpapi = new DPAPI(eclpFileName);
                         username = dpapi.GetUserName();
                         settingsProfile = dpapi.GetSettingsProfile();
                         password = dpapi.GetPassword();
+                        log.WriteLine("Username={0}, settingsProfile={1}, password length={2}", username, settingsProfile, password.Length.ToString());
                         askUser = false;
                         Console.WriteLine("Profile opened");
                     }
@@ -68,6 +74,7 @@ namespace eveCustomLauncher
 
                 if (askUser)
                 {
+                    log.WriteLine("askUser={0}, createProfile={1}", askUser, createProfile);
                     //Ask for user data
                     Console.Write("Enter username: ");
                     username = Console.ReadLine();
@@ -101,7 +108,12 @@ namespace eveCustomLauncher
                     stream.Flush();
                 }
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+                log.WriteLine("Response 1");
+                log.WriteHttpWebResponseFull(response);
+
                 ParseCookies(response.Headers["Set-Cookie"]);
+
                 if (cookieASPXAUTH == string.Empty)
                     throw new Exception("ASPXAUTH was empty (probably incorrect username or password)");
                 Console.WriteLine("Request 1\n.ASPXAUTH={0}", cookieASPXAUTH);
@@ -115,7 +127,12 @@ namespace eveCustomLauncher
                 request.CookieContainer.Add(new Cookie("UserNames", cookieUserNames, "/", EVE_DOMAIN_LOGIN));
                 request.CookieContainer.Add(new Cookie(".ASPXAUTH", cookieASPXAUTH, "/", EVE_DOMAIN_LOGIN));
                 response = (HttpWebResponse)request.GetResponse();
+
+                log.WriteLine("Response 2");
+                log.WriteHttpWebResponse(response);
+
                 ParseResponse2(response);
+
                 Console.WriteLine("Request 2\nCode={0}", rq2Code);
 
                 //REQUEST 3
@@ -130,8 +147,13 @@ namespace eveCustomLauncher
                     stream.Write(rq3JSONBytes, 0, rq3JSONBytes.Length);
                     stream.Flush();
                 }
+
+                log.WriteLine("Response 3");
+                log.WriteHttpWebResponse(response);
+
                 response = (HttpWebResponse)request.GetResponse();
                 ParseResponse3(response);
+
                 Console.WriteLine("Request 3\nRefreshToken={0}", rq3RefreshToken);
 
                 //REQUEST 4
@@ -146,8 +168,13 @@ namespace eveCustomLauncher
                     stream.Write(rq4JSONBytes, 0, rq4JSONBytes.Length);
                     stream.Flush();
                 }
+
+                log.WriteLine("Response 4");
+                log.WriteHttpWebResponse(response);
+
                 response = (HttpWebResponse)request.GetResponse();
                 ParseResponse4(response);
+
                 Console.WriteLine("Request 4\nAccessToken={0}", rq4AccessToken);
 
                 //REQUEST 5
@@ -156,7 +183,12 @@ namespace eveCustomLauncher
                 request.AllowAutoRedirect = false;
                 request.Method = "GET";
                 response = (HttpWebResponse)request.GetResponse();
+
+                log.WriteLine("Response 5");
+                log.WriteHttpWebResponse(response);
+
                 ParseResponse5(response);
+
                 Console.WriteLine("Request 5\nssoToken={0}", rq5ssoToken);
 
                 Console.WriteLine("\nEverything is OK, starting EVE client...");
@@ -166,6 +198,10 @@ namespace eveCustomLauncher
             }
             catch (Exception ex)
             {
+                log.WriteLine("Exception:");
+                log.WriteLine(ex.Message, false);
+                log.WriteLine(ex.StackTrace, false);
+
                 Console.WriteLine("Error: " + ex.Message);
                 Console.ReadLine();
             }
@@ -206,6 +242,7 @@ namespace eveCustomLauncher
             {
                 responseString = reader.ReadToEnd();
             }
+            log.WriteLine(responseString, false);
             rq5ssoToken = responseString.Split(new string[] { "access_token=" }, StringSplitOptions.None)[1].Split('&')[0];
         }
 
@@ -217,6 +254,7 @@ namespace eveCustomLauncher
             {
                 responseString = reader.ReadToEnd();
             }
+            log.WriteLine(responseString, false);
             rq4AccessToken = responseString.Split(new string[] { "AccessToken\":\"" }, StringSplitOptions.None)[1].Split('"')[0];
         }
 
@@ -228,6 +266,7 @@ namespace eveCustomLauncher
             {
                 responseString = reader.ReadToEnd();
             }
+            log.WriteLine(responseString, false);
             rq3RefreshToken = responseString.Split(new string[] { "RefreshToken\":\"" }, StringSplitOptions.None)[1].Split('"')[0];
         }
 
@@ -239,6 +278,7 @@ namespace eveCustomLauncher
             {
                 responseString = reader.ReadToEnd();
             }
+            log.WriteLine(responseString, false);
             rq2Code = responseString.Split(new string[] { "code=" }, StringSplitOptions.None)[1].Split('"')[0];
         }
 
