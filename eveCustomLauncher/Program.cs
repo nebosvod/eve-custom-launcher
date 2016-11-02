@@ -194,7 +194,6 @@ namespace eveCustomLauncher
                 Console.WriteLine("\nEverything is OK, starting EVE client...");
                 ProcessStartInfo eve = new ProcessStartInfo(exeName, string.Format(exeParams, rq5ssoToken, settingsProfile));
                 Process.Start(eve);
-                Console.ReadLine();
             }
             catch (Exception ex)
             {
