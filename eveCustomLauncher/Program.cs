@@ -40,12 +40,21 @@ namespace eveCustomLauncher
 
         static Log log;
 
+        static bool IsWinXP
+        {
+            get
+            {
+                return Environment.OSVersion.Version.Major == 5 && Environment.OSVersion.Version.Minor >= 1;
+            }
+        }
+
         static void Main(string[] args)
         {
             try
             {
                 log = new Log();
                 log.WriteLine("Program startup");
+                log.WriteLine("System: {0}", Environment.OSVersion.VersionString);
                 string username = string.Empty;
                 string password = string.Empty;
                 string settingsProfile = string.Empty;
@@ -209,20 +218,30 @@ namespace eveCustomLauncher
         static string AskForSettingsProfile()
         {
             List<string> profiles = new List<string>();
-            DirectoryInfo profileDir = new DirectoryInfo(Environment.GetEnvironmentVariable("LOCALAPPDATA") + @"\CCP\EVE");
+            DirectoryInfo profileDir;
+            if (IsWinXP)
+            {
+                profileDir = new DirectoryInfo(Environment.GetEnvironmentVariable("USERPROFILE") + @"\Local Settings\Application Data\CCP\EVE");
+            }
+            else
+            {
+                profileDir = new DirectoryInfo(Environment.GetEnvironmentVariable("LOCALAPPDATA") + @"\CCP\EVE");
+            }
+                
             if (!profileDir.Exists)
                 return "none";
+            log.WriteLine("Settings profile path: {0}", profileDir.FullName);
             foreach (DirectoryInfo dir in profileDir.GetDirectories())
                 foreach (DirectoryInfo innerDir in dir.GetDirectories())
                     if (innerDir.Name.Contains("settings"))
                         profiles.Add(dir.Name);
-            if(profiles.Count == 0)
+            if (profiles.Count == 0)
                 return "none";
-            if(profiles.Count == 1)
+            if (profiles.Count == 1)
                 return profiles[0];
 
             Console.WriteLine("Select profile:");
-            for(int i = 0; i < profiles.Count; i++)
+            for (int i = 0; i < profiles.Count; i++)
                 Console.WriteLine("{0} - {1}", i, profiles[i]);
 
             Console.Write("> ");
