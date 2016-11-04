@@ -373,7 +373,8 @@ namespace eveCustomLauncher
             DialogResult result = dialog.ShowDialog();
             if (result == DialogResult.OK)
             {
-                return dialog.SelectedPath;
+                string userPath = Path.Combine(dialog.SelectedPath, EXE_NAME);
+                return userPath;
             }
             return string.Empty;
         }
