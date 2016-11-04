@@ -18,7 +18,7 @@ namespace eveCustomLauncher
         public static void Init()
         {
             log.WriteLine("Settings init");
-            eclReg = Registry.CurrentUser.OpenSubKey(ECL_KEY);
+            eclReg = Registry.CurrentUser.OpenSubKey(ECL_KEY, true);
             if (eclReg == null)
             {
                 eclReg = Registry.CurrentUser.CreateSubKey(ECL_KEY);
