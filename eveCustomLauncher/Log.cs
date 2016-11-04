@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Net;
+using System.Reflection;
 
 namespace eveCustomLauncher
 {
     public class Log
     {
+        public static Log Instance;
         StreamWriter sw;
         const string format = "yyyy-MM-dd.HH-mm-ss.fffff";
         public string fileName = string.Empty;
@@ -17,6 +19,18 @@ namespace eveCustomLauncher
             fileName = "ECL." + DateTime.Now.ToString(format) + ".log";
             sw = new StreamWriter(fileName);
             sw.AutoFlush = true;
+            Instance = this;
+            WriteLine("ECL {0} startup", Assembly.GetEntryAssembly().GetName().Version);
+            WriteLine("System: {0}", Environment.OSVersion.VersionString);
+        }
+
+        public string GetText()
+        {
+            string copyFileName = fileName + "__1";
+            File.Copy(fileName, copyFileName);
+            string text = File.ReadAllText(copyFileName);
+            File.Delete(copyFileName);
+            return text;
         }
 
         private string GetTimestamp()
