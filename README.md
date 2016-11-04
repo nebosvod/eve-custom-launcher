@@ -1,7 +1,8 @@
 # eve-custom-launcher
 ## How to use
-* Place eveCustomLauncher.exe in a folder where exefile.exe located (/bin for old clients, /SharedCache/tq/bin for new clients)
-* Run **eveCustomLauncher.exe /CreateProfile** to create profile data file 
-* Run **eveCustomLauncher.exe /profile:PathToProfile** to load an existing profile
-* Run **eveCustomLauncher.exe** without parameters to just load game without saving anything
+* Download and run **eveCustomLauncher.exe**
+* **Important: do not place eveCustomLauncher.exe in *bin* folder of your game client, CCP launcher will probably delete it.**
+* Use "Save profile" button to create a profile file
+* Double-click profile file to run game
+* Use "Run EVE client" button to start game without saving anything
 
