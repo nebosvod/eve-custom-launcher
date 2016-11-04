@@ -93,8 +93,11 @@ namespace eveCustomLauncher
             Shell.Close();
 
             CurrentUser = Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\" + Extension, true);
-            CurrentUser.DeleteSubKey("UserChoice", false);
-            CurrentUser.Close();
+            if (CurrentUser != null)
+            {
+                CurrentUser.DeleteSubKey("UserChoice", false);
+                CurrentUser.Close();
+            }
 
             SHChangeNotify(0x08000000, 0x0000, IntPtr.Zero, IntPtr.Zero);
         }
