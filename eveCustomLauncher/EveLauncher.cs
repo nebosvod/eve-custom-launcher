@@ -82,7 +82,7 @@ namespace eveCustomLauncher
             request.AllowAutoRedirect = false;
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
-            byte[] rq1AuthBytes = Encoding.ASCII.GetBytes(string.Format(rq1AuthString, username, EscapeString(password)));
+            byte[] rq1AuthBytes = Encoding.ASCII.GetBytes(string.Format(rq1AuthString, EscapeString(username), EscapeString(password)));
             using (Stream stream = request.GetRequestStream())
             {
                 stream.Write(rq1AuthBytes, 0, rq1AuthBytes.Length);
