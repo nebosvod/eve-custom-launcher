@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Windows.Forms;
 using System.Threading;
+using System.Web;
 
 namespace eveCustomLauncher
 {
@@ -59,6 +60,7 @@ namespace eveCustomLauncher
         public string GetSSO(string username, string password)
         {
             string sso = GetSSOInt(username, password);
+            log.WriteLine("SSO: {0}", sso);
             if (sso == "eula")
             {
                 Thread.Sleep(10000);
@@ -80,7 +82,7 @@ namespace eveCustomLauncher
             request.AllowAutoRedirect = false;
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
-            byte[] rq1AuthBytes = Encoding.ASCII.GetBytes(string.Format(rq1AuthString, username, password));
+            byte[] rq1AuthBytes = Encoding.ASCII.GetBytes(string.Format(rq1AuthString, username, EscapeString(password)));
             using (Stream stream = request.GetRequestStream())
             {
                 stream.Write(rq1AuthBytes, 0, rq1AuthBytes.Length);
@@ -381,14 +383,17 @@ namespace eveCustomLauncher
 
         static DirectoryInfo GetEVEProfileDir()
         {
+            DirectoryInfo path;
             if (IsWinXP)
             {
-                return new DirectoryInfo(Environment.GetEnvironmentVariable("USERPROFILE") + @"\Local Settings\Application Data\CCP\EVE");
+                path = new DirectoryInfo(Environment.GetEnvironmentVariable("USERPROFILE") + @"\Local Settings\Application Data\CCP\EVE");
             }
             else
             {
-                return new DirectoryInfo(Environment.GetEnvironmentVariable("LOCALAPPDATA") + @"\CCP\EVE");
+                path = new DirectoryInfo(Environment.GetEnvironmentVariable("LOCALAPPDATA") + @"\CCP\EVE");
             }
+            Log.Instance.WriteLine("GetEVEProfileDir() = {0}", path.FullName);
+            return path;
         }
 
         public void RunEVE(string ssoToken, string settingsProfile)
@@ -403,6 +408,11 @@ namespace eveCustomLauncher
             {
                 return Environment.OSVersion.Version.Major == 5 && Environment.OSVersion.Version.Minor >= 1;
             }
+        }
+
+        public static string EscapeString(string s)
+        {
+            return HttpUtility.UrlEncode(s);
         }
     }
 }

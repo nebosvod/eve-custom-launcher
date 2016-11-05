@@ -18,6 +18,7 @@ namespace eveCustomLauncher
         [STAThread]
         static void Main(string[] args)
         {
+            Application.EnableVisualStyles();
             try
             {
                 log = new Log();
@@ -42,17 +43,13 @@ namespace eveCustomLauncher
                         settingsProfile = dpapi.GetSettingsProfile();
                         password = dpapi.GetPassword();
                         log.WriteLine("Username={0}, settingsProfile={1}, password length={2}", username, settingsProfile, password.Length.ToString());
+                        string ssoToken = launcher.GetSSO(username, password);
+                        log.WriteLine("\nEverything is OK, starting EVE client...");
+                        launcher.RunEVE(ssoToken, settingsProfile);
                     }
-
-                    
-
-                    string ssoToken = launcher.GetSSO(username, password);
-                    log.WriteLine("\nEverything is OK, starting EVE client...");
-                    launcher.RunEVE(ssoToken, settingsProfile);
                 }
                 else
                 {
-                    Application.EnableVisualStyles();
                     frmMain form = new frmMain(launcher);
                     form.Text = ((AssemblyTitleAttribute)(Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyTitleAttribute)))).Title;
                     Application.Run(form);
