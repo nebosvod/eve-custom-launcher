@@ -10,13 +10,20 @@ namespace eveCustomLauncher
 {
     public class Log
     {
-        public static Log Instance;
+        public static Log Instance = null;
         StreamWriter sw;
         const string format = "yyyy-MM-dd.HH-mm-ss.fffff";
         public string fileName = string.Empty;
         public Log()
         {
+            DirectoryInfo tempDir = new DirectoryInfo(Environment.GetEnvironmentVariable("TEMP"));
             fileName = "ECL." + DateTime.Now.ToString(format) + ".log";
+            if (Directory.Exists(tempDir.FullName))
+            {
+                if(!Directory.Exists(Path.Combine(tempDir.FullName, "ECL")))
+                    tempDir.CreateSubdirectory("ECL");
+                fileName = Path.Combine(Path.Combine(tempDir.FullName, "ECL"), fileName);
+            }
             sw = new StreamWriter(fileName);
             sw.AutoFlush = true;
             Instance = this;
@@ -38,14 +45,14 @@ namespace eveCustomLauncher
             return string.Format("[{0}] ", DateTime.Now.ToString("HH:mm:ss"));
         }
 
-        public void WriteLine(string text, bool addTimestamp)
+        public void WriteLine(bool addTimestamp, string text)
         {
             sw.WriteLine((addTimestamp ? GetTimestamp() : string.Empty) + text);
         }
 
         public void WriteLine(string text)
         {
-            WriteLine(text, true);
+            WriteLine(true, text);
         }
 
         public void WriteLine(bool addTimestamp, string format, params object[] arg)

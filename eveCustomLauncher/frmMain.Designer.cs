@@ -41,8 +41,14 @@
             this.txtUsername = new System.Windows.Forms.TextBox();
             this.tabs = new System.Windows.Forms.TabControl();
             this.diaSaveKey = new System.Windows.Forms.SaveFileDialog();
+            this.characterChallengeTab = new System.Windows.Forms.TabPage();
+            this.lblCCDescr = new System.Windows.Forms.Label();
+            this.txtCharacterName = new System.Windows.Forms.TextBox();
+            this.btnCCOk = new System.Windows.Forms.Button();
+            this.lblCCFailed = new System.Windows.Forms.Label();
             this.mainTab.SuspendLayout();
             this.tabs.SuspendLayout();
+            this.characterChallengeTab.SuspendLayout();
             this.SuspendLayout();
             // 
             // mainTab
@@ -152,6 +158,7 @@
             // tabs
             // 
             this.tabs.Controls.Add(this.mainTab);
+            this.tabs.Controls.Add(this.characterChallengeTab);
             this.tabs.Location = new System.Drawing.Point(12, 12);
             this.tabs.Name = "tabs";
             this.tabs.SelectedIndex = 0;
@@ -162,6 +169,56 @@
             // diaSaveKey
             // 
             this.diaSaveKey.Filter = "EVE Custom Launcher profile (*.eclp)|*.eclp|All files|*.*";
+            // 
+            // characterChallengeTab
+            // 
+            this.characterChallengeTab.BackColor = System.Drawing.SystemColors.Control;
+            this.characterChallengeTab.Controls.Add(this.lblCCFailed);
+            this.characterChallengeTab.Controls.Add(this.btnCCOk);
+            this.characterChallengeTab.Controls.Add(this.txtCharacterName);
+            this.characterChallengeTab.Controls.Add(this.lblCCDescr);
+            this.characterChallengeTab.Location = new System.Drawing.Point(4, 22);
+            this.characterChallengeTab.Name = "characterChallengeTab";
+            this.characterChallengeTab.Size = new System.Drawing.Size(300, 160);
+            this.characterChallengeTab.TabIndex = 3;
+            this.characterChallengeTab.Text = "Character challenge";
+            // 
+            // lblCCDescr
+            // 
+            this.lblCCDescr.AutoSize = true;
+            this.lblCCDescr.Location = new System.Drawing.Point(13, 38);
+            this.lblCCDescr.Name = "lblCCDescr";
+            this.lblCCDescr.Size = new System.Drawing.Size(229, 26);
+            this.lblCCDescr.TabIndex = 0;
+            this.lblCCDescr.Text = "Please enter the name of one of the characters\r\nassociated with your account:";
+            // 
+            // txtCharacterName
+            // 
+            this.txtCharacterName.Location = new System.Drawing.Point(16, 79);
+            this.txtCharacterName.Name = "txtCharacterName";
+            this.txtCharacterName.Size = new System.Drawing.Size(211, 20);
+            this.txtCharacterName.TabIndex = 1;
+            // 
+            // btnCCOk
+            // 
+            this.btnCCOk.Location = new System.Drawing.Point(233, 79);
+            this.btnCCOk.Name = "btnCCOk";
+            this.btnCCOk.Size = new System.Drawing.Size(54, 20);
+            this.btnCCOk.TabIndex = 2;
+            this.btnCCOk.Text = "Verify";
+            this.btnCCOk.UseVisualStyleBackColor = true;
+            this.btnCCOk.Click += new System.EventHandler(this.btnCCOk_Click);
+            // 
+            // lblCCFailed
+            // 
+            this.lblCCFailed.AutoSize = true;
+            this.lblCCFailed.ForeColor = System.Drawing.Color.Red;
+            this.lblCCFailed.Location = new System.Drawing.Point(13, 120);
+            this.lblCCFailed.Name = "lblCCFailed";
+            this.lblCCFailed.Size = new System.Drawing.Size(269, 26);
+            this.lblCCFailed.TabIndex = 3;
+            this.lblCCFailed.Text = "Character challenge failed, check your character name \r\nand try again.";
+            this.lblCCFailed.Visible = false;
             // 
             // frmMain
             // 
@@ -179,6 +236,8 @@
             this.mainTab.ResumeLayout(false);
             this.mainTab.PerformLayout();
             this.tabs.ResumeLayout(false);
+            this.characterChallengeTab.ResumeLayout(false);
+            this.characterChallengeTab.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -197,6 +256,11 @@
         private System.Windows.Forms.Button btnRunEVE;
         private System.Windows.Forms.TextBox txtNewProfile;
         private System.Windows.Forms.SaveFileDialog diaSaveKey;
+        private System.Windows.Forms.TabPage characterChallengeTab;
+        private System.Windows.Forms.Label lblCCDescr;
+        private System.Windows.Forms.Button btnCCOk;
+        private System.Windows.Forms.TextBox txtCharacterName;
+        private System.Windows.Forms.Label lblCCFailed;
 
     }
 }

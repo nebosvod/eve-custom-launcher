@@ -20,6 +20,9 @@ namespace eveCustomLauncher
 
         const string EVE_DOMAIN_LOGIN = "login.eveonline.com";
 
+        const string C_ASPXAUTH = ".ASPXAUTH";
+        const string C_USERNAMES = "UserNames";
+
         //Login urls
         string[] urls = new string[]
         {
@@ -33,14 +36,18 @@ namespace eveCustomLauncher
         string urlEula = @"https://login.eveonline.com/OAuth/Eula";
         string eulaParams = @"eulaHash={0}&returnUrl=https%3A%2F%2Flogin.eveonline.com%2Foauth%2Fauthorize%2F%3Fclient_id%3DeveLauncherTQ%26lang%3Den%26response_type%3Dcode%26redirect_uri%3Dhttps%3A%2F%2Flogin.eveonline.com%2Flauncher%3Fclient_id%3DeveLauncherTQ%26scope%3DeveClientToken%2520user&action=Accept";
 
+        string urlCharacterChallenge = @"https://login.eveonline.com/Account/Challenge?ReturnUrl=%2Foauth%2Fauthorize%2F%3Fclient_id%3DeveLauncherTQ%26lang%3Den%26response_type%3Dcode%26redirect_uri%3Dhttps%3A%2F%2Flogin.eveonline.com%2Flauncher%3Fclient_id%3DeveLauncherTQ%26scope%3DeveClientToken%2520user";
+        string characterChallengeParams = @"Challenge={0}&RememberCharacterChallenge=true&RememberCharacterChallenge=false&command=Continue";
+
         //Request params
         static string rq1AuthString = "UserName={0}&Password={1}";
         static string rq3rq4Token = "Token={0}";
         static string rq5AccessToken = "?accesstoken={0}";
 
         //Responses
-        static string cookieASPXAUTH = string.Empty;
-        static string cookieUserNames = string.Empty;
+        //static string cookieASPXAUTH = string.Empty;
+        //static string cookieUserNames = string.Empty;
+        CookieCollection rq1Cookies = null;
         static string rq2Code = string.Empty;
         string rq3RefreshToken = string.Empty;
         string rq4AccessToken = string.Empty;
@@ -48,9 +55,12 @@ namespace eveCustomLauncher
 
         bool needToVerifyEmail = false;
         bool needToAcceptEula = false;
+        bool needToPerformCharacterChallenge = false;
         string eulaHash = string.Empty;
 
         Log log;
+        
+
         public EveLauncher()
         {
             log = Log.Instance;
@@ -60,6 +70,7 @@ namespace eveCustomLauncher
         public string GetSSO(string username, string password)
         {
             string sso = GetSSOInt(username, password);
+            MessageBox.Show(sso);
             log.WriteLine("SSO: {0}", sso);
             if (sso == "eula")
             {
@@ -91,22 +102,30 @@ namespace eveCustomLauncher
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
             log.WriteLine("Response 1");
-            log.WriteHttpWebResponseFull(response);
+            log.WriteHttpWebResponse(response);
 
-            ParseCookies(response.Headers["Set-Cookie"]);
+            ParseResponse1(response);
 
-            if (cookieASPXAUTH == string.Empty)
+            if (needToPerformCharacterChallenge)
+            {
+                log.WriteLine("Need to perform character challenge");
+                return "cc";
+                //PerformRequest1_1();
+            }
+
+            if (rq1Cookies[C_ASPXAUTH] == null)
                 throw new Exception("ASPXAUTH was empty (probably incorrect username or password)");
-            Console.WriteLine("Request 1\n.ASPXAUTH={0}", cookieASPXAUTH);
+            Console.WriteLine("Request 1\n.ASPXAUTH={0}", rq1Cookies[C_ASPXAUTH].Value);
 
             //REQUEST 2
             request = (HttpWebRequest)WebRequest.Create(urls[1]);
             request.ServicePoint.Expect100Continue = false;
             request.AllowAutoRedirect = false;
             request.Method = "GET";
-            request.CookieContainer = new CookieContainer(2);
-            request.CookieContainer.Add(new Cookie("UserNames", cookieUserNames, "/", EVE_DOMAIN_LOGIN));
-            request.CookieContainer.Add(new Cookie(".ASPXAUTH", cookieASPXAUTH, "/", EVE_DOMAIN_LOGIN));
+            request.CookieContainer = new CookieContainer();
+            request.CookieContainer.Add(rq1Cookies);
+            //request.CookieContainer.Add(new Cookie("UserNames", rq1Cookies[C_USERNAMES].Value, "/", EVE_DOMAIN_LOGIN));
+            //request.CookieContainer.Add(new Cookie(".ASPXAUTH", rq1Cookies[].Value, "/", EVE_DOMAIN_LOGIN));
             response = (HttpWebResponse)request.GetResponse();
 
             log.WriteLine("Response 2");
@@ -126,9 +145,10 @@ namespace eveCustomLauncher
                 request.AllowAutoRedirect = false;
                 request.Method = "POST";
                 request.ContentType = "application/x-www-form-urlencoded";
-                request.CookieContainer = new CookieContainer(2);
-                request.CookieContainer.Add(new Cookie("UserNames", cookieUserNames, "/", EVE_DOMAIN_LOGIN));
-                request.CookieContainer.Add(new Cookie(".ASPXAUTH", cookieASPXAUTH, "/", EVE_DOMAIN_LOGIN));
+                request.CookieContainer = new CookieContainer();
+                request.CookieContainer.Add(rq1Cookies);
+                //request.CookieContainer.Add(new Cookie("UserNames", cookieUserNames, "/", EVE_DOMAIN_LOGIN));
+                //request.CookieContainer.Add(new Cookie(".ASPXAUTH", cookieASPXAUTH, "/", EVE_DOMAIN_LOGIN));
                 byte[] eulaBytes = Encoding.ASCII.GetBytes(string.Format(eulaParams, eulaHash));
                 using (Stream stream = request.GetRequestStream())
                 {
@@ -138,7 +158,7 @@ namespace eveCustomLauncher
                 response = (HttpWebResponse)request.GetResponse();
                 log.WriteHttpWebResponse(response);
                 string responseString = GetStringFromResponse(response, string.Empty, string.Empty)[0];
-                log.WriteLine(responseString, false);
+                log.WriteLine(false, responseString);
                 return "eula";
             }
 
@@ -202,6 +222,36 @@ namespace eveCustomLauncher
             return rq5ssoToken;
         }
 
+        public bool PerformCharacterChallengeRequest(string userName, string characterName)
+        {
+            log.WriteLine("Performing character challenge for {0}", characterName);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(urlCharacterChallenge);
+            request.ServicePoint.Expect100Continue = false;
+            request.AllowAutoRedirect = false;
+            request.Method = "POST";
+            request.ContentType = "application/x-www-form-urlencoded";
+            request.CookieContainer = new CookieContainer();
+            request.CookieContainer.Add(rq1Cookies);
+            //request.CookieContainer.Add(new Cookie("UserNames", userName, "/", EVE_DOMAIN_LOGIN));
+            byte[] characterChallengeBytes = Encoding.ASCII.GetBytes(string.Format(characterChallengeParams, EscapeString(characterName)));
+            using (Stream stream = request.GetRequestStream())
+            {
+                stream.Write(characterChallengeBytes, 0, characterChallengeBytes.Length);
+                stream.Flush();
+            }
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            rq1Cookies = new CookieCollection();
+            ParseResponse1(response);
+            needToPerformCharacterChallenge = false;
+            if (rq1Cookies[C_ASPXAUTH].Value == string.Empty)
+                return false;
+            else return true;
+            //log.WriteHttpWebResponse(response);
+            //string responseString = GetStringFromResponse(response, string.Empty, string.Empty)[0];
+            //log.WriteLine(false, responseString);
+
+        }
+
         void ParseResponse5(HttpWebResponse response)
         {
             string responseString = string.Empty;
@@ -210,7 +260,7 @@ namespace eveCustomLauncher
             {
                 responseString = reader.ReadToEnd();
             }
-            log.WriteLine(responseString, false);
+            log.WriteLine(false, responseString);
             rq5ssoToken = responseString.Split(new string[] { "access_token=" }, StringSplitOptions.None)[1].Split('&')[0];
         }
 
@@ -222,7 +272,7 @@ namespace eveCustomLauncher
             {
                 responseString = reader.ReadToEnd();
             }
-            log.WriteLine(responseString, false);
+            log.WriteLine(false, responseString);
             rq4AccessToken = responseString.Split(new string[] { "AccessToken\":\"" }, StringSplitOptions.None)[1].Split('"')[0];
         }
 
@@ -234,7 +284,7 @@ namespace eveCustomLauncher
             {
                 responseString = reader.ReadToEnd();
             }
-            log.WriteLine(responseString, false);
+            log.WriteLine(false, responseString);
             rq3RefreshToken = responseString.Split(new string[] { "RefreshToken\":\"" }, StringSplitOptions.None)[1].Split('"')[0];
         }
 
@@ -246,7 +296,7 @@ namespace eveCustomLauncher
             {
                 responseString = reader.ReadToEnd();
             }
-            log.WriteLine(responseString, false);
+            log.WriteLine(false, responseString);
 
             if (responseString.Contains("eulaHash"))
             {
@@ -281,22 +331,49 @@ namespace eveCustomLauncher
             return source.Split(new string[] { splitBefore }, StringSplitOptions.None)[1].Split(new string[] { splitAfter }, StringSplitOptions.None)[0];
         }
 
-        void ParseCookies(string cookieString)
+        void ParseResponse1(HttpWebResponse response)
         {
-            string[] cookieStrings = cookieString.Split(',', ';');
-            foreach (string cookie in cookieStrings)
+            string cookieString = response.Headers["Set-Cookie"];
+            Uri loginUri = new Uri("https://" + EVE_DOMAIN_LOGIN);
+            if (cookieString != null)
             {
-                if (cookie.Contains('='))
+                CookieContainer container = new CookieContainer();
+                container.SetCookies(loginUri, cookieString);
+                rq1Cookies = container.GetCookies(loginUri);
+            }
+            else rq1Cookies = new CookieCollection();
+            
+            /*
+            if (cookieString != null)
+            {
+                string[] cookieStrings = cookieString.Split(',', ';');
+                foreach (string cookie in cookieStrings)
                 {
-                    string[] cookieParts = cookie.Split('=');
-                    if (cookieParts.Length == 2)
+                    if (cookie.Contains('='))
                     {
-                        if (cookieParts[0].Contains("UserNames"))
-                            cookieUserNames = cookieParts[1];
-                        else if (cookieParts[0].Contains("ASPXAUTH"))
-                            cookieASPXAUTH = cookieParts[1];
+                        string[] cookieParts = cookie.Split('=');
+                        if (cookieParts.Length == 2)
+                        {
+                            if (cookieParts[0].Contains("UserNames"))
+                                cookieUserNames = cookieParts[1];
+                            else if (cookieParts[0].Contains("ASPXAUTH"))
+                                cookieASPXAUTH = cookieParts[1];
+                        }
                     }
                 }
+            }
+            */
+
+            string responseString = string.Empty;
+            var encoding = ASCIIEncoding.ASCII;
+            using (var reader = new System.IO.StreamReader(response.GetResponseStream(), encoding))
+            {
+                responseString = reader.ReadToEnd();
+            }
+            log.WriteLine(false, responseString);
+            if (responseString.Contains("CharacterChallenge"))
+            {
+                needToPerformCharacterChallenge = true;
             }
         }
 
@@ -412,7 +489,11 @@ namespace eveCustomLauncher
 
         public static string EscapeString(string s)
         {
-            return HttpUtility.UrlEncode(s);
+            //return HttpUtility.UrlEncode(s); does not work properly
+            StringBuilder sb = new StringBuilder();
+            foreach (char c in s)
+                sb.Append(Uri.HexEscape(c));
+            return sb.ToString();
         }
     }
 }

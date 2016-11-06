@@ -58,8 +58,8 @@ namespace eveCustomLauncher
             catch (Exception ex)
             {
                 log.WriteLine("Exception:");
-                log.WriteLine(ex.Message, false);
-                log.WriteLine(ex.StackTrace, false);
+                log.WriteLine(false, ex.Message);
+                log.WriteLine(false, ex.StackTrace);
                 new ErrorForm(ex).ShowDialog();
             }
         } 

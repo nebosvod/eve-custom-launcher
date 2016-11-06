@@ -13,12 +13,14 @@ namespace eveCustomLauncher
     public partial class frmMain : Form
     {
         static bool lockForm = false;
+        static bool characterChallenge = false;
         private Action<Exception> action = (Exception e) => new ErrorForm(e).ShowDialog();
         private EveLauncher launcher;
         public frmMain(EveLauncher launcher)
         {
             this.launcher = launcher;
             InitializeComponent();
+            characterChallengeTab.Parent = null;
         }
 
         private void frmMain_Load(object sender, EventArgs e)
@@ -68,6 +70,19 @@ namespace eveCustomLauncher
             else e.SuppressKeyPress = true;
         }
 
+        private bool CheckCharacterNameField()
+        {
+            ToolTip tip = new ToolTip();
+            tip.IsBalloon = true;
+
+            if (txtCharacterName.Text == string.Empty)
+            {
+                tip.Show("this field cannot be empty", txtCharacterName, new Point(-10, -35), 5000);
+                return false;
+            }
+            else return true;
+        }
+
         private bool CheckFields()
         {
             ToolTip tip = new ToolTip();
@@ -110,11 +125,15 @@ namespace eveCustomLauncher
                 Thread eve = new Thread(eveThreadStart);
                 eve.Start(eveParameters);
                 txtPassword.Text = string.Empty;
-                txtUsername.Text = string.Empty;
                 btnRunEVE.Enabled = false;
                 while (lockForm)
                 {
                     Application.DoEvents();
+                }
+                if (characterChallenge)
+                {
+                    characterChallengeTab.Parent = this.tabs;
+                    tabs.SelectedTab = characterChallengeTab;
                 }
                 btnRunEVE.Enabled = true;
             }
@@ -129,6 +148,12 @@ namespace eveCustomLauncher
                 string password = parameters[1];
                 string settingsProfile = parameters[2];
                 string sso = launcher.GetSSO(username, password);
+                if (sso == "cc")
+                {
+                    characterChallenge = true;
+                    lockForm = false;
+                    return;
+                }
                 launcher.RunEVE(sso, settingsProfile);
                 lockForm = false;
             }
@@ -167,6 +192,27 @@ namespace eveCustomLauncher
             {
                 txtUsername.Text = string.Empty;
                 txtPassword.Text = string.Empty;
+            }
+        }
+
+        private void btnCCOk_Click(object sender, EventArgs e)
+        {
+            if (CheckCharacterNameField())
+            {
+                lblCCFailed.Visible = false;
+                btnCCOk.Enabled = false;
+                bool result = launcher.PerformCharacterChallengeRequest(txtUsername.Text, txtCharacterName.Text);
+                txtCharacterName.Text = string.Empty;
+                btnCCOk.Enabled = true;
+                if (result)
+                {
+                    tabs.SelectedTab = mainTab;
+                    characterChallengeTab.Parent = null;
+                }
+                else
+                {
+                    lblCCFailed.Visible = true;
+                }
             }
         }
     }
