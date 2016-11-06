@@ -70,7 +70,6 @@ namespace eveCustomLauncher
         public string GetSSO(string username, string password)
         {
             string sso = GetSSOInt(username, password);
-            MessageBox.Show(sso);
             log.WriteLine("SSO: {0}", sso);
             if (sso == "eula")
             {
